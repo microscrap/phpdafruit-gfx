@@ -4,12 +4,12 @@ namespace Microscrap\GFX\PhpdaFruit\Concerns;
 
 use InvalidArgumentException;
 use OutOfBoundsException;
-use ScrapyardIO\NutsAndBolts\Buffers\FormatSpecFrameBuffer;
+use BareMetal\Framebuffers\FormatSpecFramebuffer;
 
 /**
- * @property FormatSpecFrameBuffer $buffer
+ * @property FormatSpecFramebuffer $buffer
  *
- * @method FormatSpecFrameBuffer buffer()
+ * @method FormatSpecFramebuffer buffer()
  */
 trait GFXAPI
 {

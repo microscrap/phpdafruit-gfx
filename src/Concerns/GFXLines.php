@@ -30,7 +30,7 @@ trait GFXLines
         // This prevents calling drawPixel() for off-screen portions
         $clipped = $this->clipLine($x0, $y0, $x1, $y1);
 
-        if ($clipped === null) {
+        if (is_null($clipped)) {
             // Line is completely outside viewport
             return $this;
         }

@@ -1,12 +1,12 @@
 <?php
 
 arch('no debug statements leak into the package')
-    ->expect(['dd', 'dump', 'var_dump', 'ray', 'print_r'])
-    ->not->toBeUsed();
+    ->expect('Microscrap\GFX\PhpdaFruit')
+    ->not->toUse(['dd', 'dump', 'var_dump', 'ray', 'print_r']);
 
-arch('buffers extend the format-spec framebuffer')
-    ->expect('Microscrap\GFX\PhpdaFruit\Buffers')
-    ->toExtend('ScrapyardIO\NutsAndBolts\Buffers\FormatSpecFrameBuffer');
+arch('the renderer extends the framework 2D surface')
+    ->expect('Microscrap\GFX\PhpdaFruit\PhpdafruitGFX')
+    ->toExtend('BareMetal\GFX\Renderer2D');
 
 arch('concerns are traits')
     ->expect('Microscrap\GFX\PhpdaFruit\Concerns')

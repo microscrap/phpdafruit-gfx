@@ -17,7 +17,7 @@ trait GFXBitmaps
         $byte_width = ($w + 7) >> 3;
 
         // Optimization: Draw background as single rect if needed
-        if ($bg !== null) {
+        if (! is_null($bg)) {
             $this->fillRect($x, $y, $w, $h, $bg);
         }
 
@@ -47,7 +47,7 @@ trait GFXBitmaps
         $byte_width = ($w + 7) >> 3;
 
         // Optimization: Draw background as single rect if needed
-        if ($bg !== null) {
+        if (! is_null($bg)) {
             $this->fillRect($x, $y, $w, $h, $bg);
         }
 
@@ -106,7 +106,7 @@ trait GFXBitmaps
         for ($j = 0; $j < $h; $j++) {
             for ($i = 0; $i < $w; $i++) {
                 $color = $map[$j * $w + $i] ?? null;
-                if ($color !== null) {
+                if (! is_null($color)) {
                     $this->drawPixel($x + $i, $y + $j, $color);
                 }
             }

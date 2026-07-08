@@ -2,8 +2,8 @@
 
 namespace Microscrap\GFX\PhpdaFruit\Concerns;
 
-use Microscrap\GFX\PhpdaFruit\Fonts\ClassicFont;
-use Microscrap\GFX\PhpdaFruit\Fonts\PhpdafruitFont;
+use BareMetal\GFX\Fonts\ClassicFont;
+use BareMetal\GFX\Fonts\GFXFont;
 
 trait GFXText
 {
@@ -19,7 +19,7 @@ trait GFXText
 
     protected int $text_size_y = 1;
 
-    protected ?PhpdafruitFont $font = null;
+    protected ?GFXFont $font = null;
 
     protected ?ClassicFont $classic_font = null;
 
@@ -29,7 +29,7 @@ trait GFXText
 
     public function write(int $c): static
     {
-        if ($this->font === null) {
+        if (is_null($this->font)) {
             // Classic built-in font
             if ($c === ord("\n")) {
                 $this->cursor_x = 0;
@@ -75,9 +75,9 @@ trait GFXText
 
     public function drawChar(int $x, int $y, int $c, int $color, int $bg, int $size_x, int $size_y): static
     {
-        if ($this->font === null) {
+        if (is_null($this->font)) {
             // Classic built-in font (5x7 in column-major format)
-            if ($this->classic_font === null) {
+            if (is_null($this->classic_font)) {
                 $this->classic_font = new ClassicFont;
             }
 
@@ -241,7 +241,7 @@ trait GFXText
     public function setTextSize(int $s, ?int $y = null): static
     {
         $this->text_size_x = ($s > 0) ? $s : 1;
-        $this->text_size_y = ($y !== null && $y > 0) ? $y : $this->text_size_x;
+        $this->text_size_y = (! is_null($y) && $y > 0) ? $y : $this->text_size_x;
 
         return $this;
     }
@@ -279,10 +279,10 @@ trait GFXText
         return $this;
     }
 
-    public function setFont(?PhpdafruitFont $f = null): static
+    public function setFont(?GFXFont $f = null): static
     {
-        if ($f !== null) {
-            if ($this->font === null) {
+        if (! is_null($f)) {
+            if (is_null($this->font)) {
                 // Switching from classic to custom font.
                 // Adafruit custom fonts use baseline-based y offsets; LVGL fonts in this
                 // project use line-based offsets and don't need this legacy shift.
@@ -290,7 +290,7 @@ trait GFXText
                     $this->cursor_y += 6;
                 }
             }
-        } elseif ($this->font !== null) {
+        } elseif (! is_null($this->font)) {
             // Switching from custom to classic font
             // Move cursor up only when leaving Adafruit baseline-based custom fonts.
             if ($this->font->getFontEncoding() !== 'lvgl') {
@@ -312,7 +312,7 @@ trait GFXText
 
     public function charBounds(int $c, int &$x, int &$y, int &$min_x, int &$min_y, int &$max_x, int &$max_y): static
     {
-        if ($this->font !== null) {
+        if (! is_null($this->font)) {
             // Custom font
             if ($c === ord("\n")) {
                 $x = 0;

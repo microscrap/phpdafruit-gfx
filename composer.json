@@ -3,7 +3,7 @@
     "description": "AdafruitGFX-like Rendering Package for the ScrapyardIO Framework",
     "license": "MIT",
     "homepage": "https://scrapyard-io.projectsaturnstudios.com",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "authors": [
         {
             "name": "Angel Gonzalez",
@@ -12,11 +12,13 @@
     ],
     "require": {
         "php": "^8.3",
-        "scrapyard-io/nuts-and-bolts": "^0.4.1",
-        "scrapyard-io/reality-interface": "^0.4.1"
+        "bare-metal/gfx": "^0.5.0",
+        "bare-metal/contracts": "^0.5.0",
+        "bare-metal/framebuffers": "^0.5.0"
     },
     "require-dev": {
-        "pestphp/pest": "^4"
+        "pestphp/pest": "^4",
+        "scrapyard-io/framework": "^0.5.0"
     },
     "suggest": {
         "ext-gd": "Required only for drawImageFromFile() and drawImageDithered() to decode JPEG/PNG/GIF/WebP/BMP files. Raw pixel data via drawBitmap()/drawColorMap()/ditherFloydSteinberg() works without it."
