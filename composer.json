@@ -17,8 +17,7 @@
         "bare-metal/framebuffers": "^0.5.0"
     },
     "require-dev": {
-        "pestphp/pest": "^4",
-        "scrapyard-io/framework": "^0.5.0"
+        "pestphp/pest": "^4"
     },
     "suggest": {
         "ext-gd": "Required only for drawImageFromFile() and drawImageDithered() to decode JPEG/PNG/GIF/WebP/BMP files. Raw pixel data via drawBitmap()/drawColorMap()/ditherFloydSteinberg() works without it."
