@@ -1,19 +1,19 @@
 <?php
 
-use BareMetal\Contracts\Framebuffers\DTO\FormatSpec;
-use BareMetal\Contracts\Framebuffers\Enums\BitDepth;
-use BareMetal\Contracts\Framebuffers\Enums\BitOrder;
-use BareMetal\Contracts\Framebuffers\Enums\PageAxis;
-use BareMetal\Contracts\Framebuffers\Enums\PixelFormat;
-use BareMetal\Framebuffers\FullFramebuffer;
-use Microscrap\GFX\PhpdaFruit\PhpdafruitGFX;
+use Fabricate\Framebuffers\FormatSpec;
+use Fabricate\Contracts\Framebuffers\Enums\BitDepth;
+use Fabricate\Contracts\Framebuffers\Enums\BitOrder;
+use Fabricate\Contracts\Framebuffers\Enums\PageAxis;
+use Fabricate\Contracts\Framebuffers\Enums\PixelFormat;
+use Fabricate\Framebuffers\Strategy\FullFramebuffer;
+use Microscrap\GFX\PhpdaFruit\PhpdafruitGfx;
 
 /**
  * Golden-output parity with the published GFXRenderer v0.4.1: the fixed
  * README scene must keep producing byte-identical packed dumps. The hashes
  * were captured by running the identical scene through the old package.
  */
-function parityScene(PhpdafruitGFX $renderer, int $bg, int $fg, int $accent, int $text, string $label): string
+function parityScene(PhpdafruitGfx $renderer, int $bg, int $fg, int $accent, int $text, string $label): string
 {
     $renderer
         ->fill($bg)
@@ -32,7 +32,7 @@ function parityScene(PhpdafruitGFX $renderer, int $bg, int $fg, int $accent, int
 }
 
 it('matches the old renderer byte-for-byte on a mono vertical-page panel', function () {
-    $renderer = new PhpdafruitGFX(new FullFramebuffer(128, 64, new FormatSpec(
+    $renderer = new PhpdafruitGfx(new FullFramebuffer(128, 64, new FormatSpec(
         PixelFormat::MONO_VERTICAL_PAGE,
         BitDepth::B1,
         bit_order: BitOrder::LSB_FIRST,
@@ -44,7 +44,7 @@ it('matches the old renderer byte-for-byte on a mono vertical-page panel', funct
 });
 
 it('matches the old renderer byte-for-byte on a row-major RGB565 panel', function () {
-    $renderer = new PhpdafruitGFX(new FullFramebuffer(160, 128, new FormatSpec(
+    $renderer = new PhpdafruitGfx(new FullFramebuffer(160, 128, new FormatSpec(
         PixelFormat::ROW_MAJOR,
         BitDepth::B16,
     )));

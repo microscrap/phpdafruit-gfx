@@ -1,6 +1,6 @@
 <?php
 
-use BareMetal\GFX\Fonts\GFXFont;
+use Fabricate\Rendering\Fonts\GFXFont;
 
 /**
  * A minimal Adafruit-encoded 1bpp font: one 2x2 solid glyph for 'A',

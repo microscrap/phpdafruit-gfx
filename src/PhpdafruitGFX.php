@@ -2,15 +2,16 @@
 
 namespace Microscrap\GFX\PhpdaFruit;
 
-use BareMetal\Contracts\Framebuffers\DTO\DumpedBuffer;
-use BareMetal\Contracts\Framebuffers\DTO\FormatSpec;
-use BareMetal\Contracts\Framebuffers\Enums\PixelFormat;
-use BareMetal\Contracts\Framebuffers\Framebuffer;
-use BareMetal\Framebuffers\DirtyRegionsBuffer;
-use BareMetal\Framebuffers\FormatSpecFramebuffer;
-use BareMetal\Framebuffers\FullFramebuffer;
-use BareMetal\Framebuffers\PageSegmentBuffer;
-use BareMetal\GFX\Renderer2D;
+use Fabricate\Contracts\Framebuffers\Enums\PixelFormat;
+use Fabricate\Contracts\Framebuffers\Framebuffer;
+use Fabricate\Contracts\Framebuffers\SoftwareRenderableFramebuffer;
+use Fabricate\Contracts\Rendering\RenderingException;
+use Fabricate\Framebuffers\DataObjects\DumpedBuffer;
+use Fabricate\Framebuffers\FormatSpec;
+use Fabricate\Framebuffers\Strategy\DirtyRegionsBuffer;
+use Fabricate\Framebuffers\Strategy\FullFramebuffer;
+use Fabricate\Framebuffers\Strategy\PageSegmentBuffer;
+use Fabricate\Rendering\Renderer2D;
 use Microscrap\GFX\PhpdaFruit\Concerns\GFXAPI;
 use RuntimeException;
 
@@ -23,64 +24,80 @@ use RuntimeException;
  * @property-read int $width
  * @property int $rotation
  */
-class PhpdafruitGFX extends Renderer2D
+class PhpdafruitGfx extends Renderer2D
 {
     use GFXAPI;
 
-    public function __construct(
-        protected FormatSpecFramebuffer $buffer,
-    ) {}
+    protected ?Framebuffer $buffer = null;
+
+    public function __construct(?Framebuffer $buffer = null)
+    {
+        if (! is_null($buffer)) {
+            $this->useFramebuffer($buffer);
+        }
+    }
+
+    public function useFramebuffer(Framebuffer $framebuffer): static
+    {
+        if (! $this->supportsFramebuffer($framebuffer)) {
+            throw new RenderingException(
+                'PhpdaFruit requires a software-renderable framebuffer; '.$framebuffer::class.' given.'
+            );
+        }
+
+        $this->buffer = $framebuffer;
+
+        return $this;
+    }
+
+    public function supportsFramebuffer(Framebuffer $framebuffer): bool
+    {
+        return $framebuffer instanceof SoftwareRenderableFramebuffer;
+    }
 
     public function drawPixel(int $x, int $y, int $color): static
     {
-        // Bounds check in logical coordinates
-        if (($x < 0) || ($y < 0) || ($x >= $this->width) || ($y >= $this->height)) {
+        if (($x < 0) || ($y < 0) || ($x >= $this->width()) || ($y >= $this->height())) {
             return $this;
         }
 
         [$x, $y] = $this->applyRotation($x, $y);
-        $this->buffer->setPixel($x, $y, $color);
+        $this->requireBuffer()->setPixel($x, $y, $color);
 
         return $this;
     }
 
     public function drawSegment(int $x, int $y, int $width, int $height, int $color): static
     {
-        // Early bounds check - if the entire segment is out of bounds, skip
-        if (($x >= $this->width) || ($y >= $this->height) ||
+        if (($x >= $this->width()) || ($y >= $this->height()) ||
             ($x + $width <= 0) || ($y + $height <= 0) ||
             ($width <= 0) || ($height <= 0)) {
             return $this;
         }
 
-        // Fast path: no rotation - use buffer->setSegment() directly
+        $buffer = $this->requireBuffer();
+
         if ($this->rotation === 0) {
-            // Calculate actual on-screen region (handles negative coordinates correctly)
             $left = max(0, $x);
             $top = max(0, $y);
-            $right = min($x + $width, $this->buffer->viewportWidth());
-            $bottom = min($y + $height, $this->buffer->viewportHeight());
+            $right = min($x + $width, $buffer->viewportWidth());
+            $bottom = min($y + $height, $buffer->viewportHeight());
 
             $clipped_width = $right - $left;
             $clipped_height = $bottom - $top;
 
-            // Only draw if there's actual area to draw
             if ($clipped_width > 0 && $clipped_height > 0) {
-                $this->buffer->setSegment($left, $top, $clipped_width, $clipped_height, $color);
+                $buffer->setSegment($left, $top, $clipped_width, $clipped_height, $color);
             }
 
             return $this;
         }
 
-        // Rotated segment: Since we only support 90° rotations, a rotated rectangle
-        // is still a rectangle. Calculate the rotated bounding box and use setSegment().
-        // This is O(4 corners + 1 segment) instead of O(width × height pixels).
-
         $corners = [
-            [$x, $y],                          // Top-left
-            [$x + $width - 1, $y],             // Top-right
-            [$x, $y + $height - 1],            // Bottom-left
-            [$x + $width - 1, $y + $height - 1], // Bottom-right
+            [$x, $y],
+            [$x + $width - 1, $y],
+            [$x, $y + $height - 1],
+            [$x + $width - 1, $y + $height - 1],
         ];
 
         $rotated_corners = [];
@@ -88,27 +105,21 @@ class PhpdafruitGFX extends Renderer2D
             $rotated_corners[] = $this->applyRotation($cx, $cy);
         }
 
-        // Find bounding box of rotated rectangle
         [$min_x, $min_y, $max_x, $max_y] = $this->getBoundingBox($rotated_corners);
 
-        // Clip to actual buffer dimensions
         $clipped_min_x = max(0, (int) $min_x);
         $clipped_min_y = max(0, (int) $min_y);
-        $clipped_max_x = min($this->buffer->viewportWidth() - 1, (int) $max_x);
-        $clipped_max_y = min($this->buffer->viewportHeight() - 1, (int) $max_y);
+        $clipped_max_x = min($buffer->viewportWidth() - 1, (int) $max_x);
+        $clipped_max_y = min($buffer->viewportHeight() - 1, (int) $max_y);
 
-        // If the rotated segment is completely out of bounds, nothing to draw
         if ($clipped_max_x < $clipped_min_x || $clipped_max_y < $clipped_min_y) {
             return $this;
         }
 
-        // Calculate dimensions of the clipped rotated bounding box
         $fill_width = $clipped_max_x - $clipped_min_x + 1;
         $fill_height = $clipped_max_y - $clipped_min_y + 1;
 
-        // Use buffer->setSegment() directly on the rotated bounding box
-        // This is efficient because 90° rotations preserve rectangularity
-        $this->buffer->setSegment($clipped_min_x, $clipped_min_y, $fill_width, $fill_height, $color);
+        $buffer->setSegment($clipped_min_x, $clipped_min_y, $fill_width, $fill_height, $color);
 
         return $this;
     }
@@ -152,9 +163,9 @@ class PhpdafruitGFX extends Renderer2D
         return $this->fillScreen($color);
     }
 
-    public function buffer(): FormatSpecFramebuffer
+    public function buffer(): Framebuffer
     {
-        return $this->buffer;
+        return $this->requireBuffer();
     }
 
     /**
@@ -190,5 +201,14 @@ class PhpdafruitGFX extends Renderer2D
             'rotation' => $this->setRotation((int) $value),
             default => throw new RuntimeException("Unknown property $name"),
         };
+    }
+
+    protected function requireBuffer(): Framebuffer
+    {
+        if (is_null($this->buffer)) {
+            throw RenderingException::framebufferNotAttached(static::class);
+        }
+
+        return $this->buffer;
     }
 }

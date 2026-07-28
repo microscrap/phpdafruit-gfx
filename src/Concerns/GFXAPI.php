@@ -4,16 +4,17 @@ namespace Microscrap\GFX\PhpdaFruit\Concerns;
 
 use InvalidArgumentException;
 use OutOfBoundsException;
-use BareMetal\Framebuffers\FormatSpecFramebuffer;
+use Fabricate\Contracts\Framebuffers\Framebuffer;
 
 /**
- * @property FormatSpecFramebuffer $buffer
+ * @property Framebuffer $buffer
  *
- * @method FormatSpecFramebuffer buffer()
+ * @method Framebuffer buffer()
  */
 trait GFXAPI
 {
-    use GFXBitmaps, GFXDithering, GFXImages, GFXText;
+    use GFXBitmaps, GFXDithering, GFXImages;
+    use \Fabricate\Rendering\Concerns\GFXText;
     use GFXLines, GFXRects, GFXRounds, GFXTriangles;
 
     protected int $rotation = 0;

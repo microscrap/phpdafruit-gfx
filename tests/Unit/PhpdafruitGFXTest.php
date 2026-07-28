@@ -1,15 +1,15 @@
 <?php
 
-use BareMetal\Contracts\Framebuffers\DTO\FormatSpec;
-use BareMetal\Contracts\Framebuffers\Enums\BitDepth;
-use BareMetal\Contracts\Framebuffers\Enums\BitOrder;
-use BareMetal\Contracts\Framebuffers\Enums\PageAxis;
-use BareMetal\Contracts\Framebuffers\Enums\PixelFormat;
-use BareMetal\Contracts\Framebuffers\Enums\RenderType;
-use BareMetal\Framebuffers\DirtyRegionsBuffer;
-use BareMetal\Framebuffers\FullFramebuffer;
-use BareMetal\Framebuffers\PageSegmentBuffer;
-use Microscrap\GFX\PhpdaFruit\PhpdafruitGFX;
+use Fabricate\Framebuffers\FormatSpec;
+use Fabricate\Contracts\Framebuffers\Enums\BitDepth;
+use Fabricate\Contracts\Framebuffers\Enums\BitOrder;
+use Fabricate\Contracts\Framebuffers\Enums\PageAxis;
+use Fabricate\Contracts\Framebuffers\Enums\PixelFormat;
+use Fabricate\Contracts\Framebuffers\Enums\RenderType;
+use Fabricate\Framebuffers\Strategy\DirtyRegionsBuffer;
+use Fabricate\Framebuffers\Strategy\FullFramebuffer;
+use Fabricate\Framebuffers\Strategy\PageSegmentBuffer;
+use Microscrap\GFX\PhpdaFruit\PhpdafruitGfx;
 
 it('sets a single pixel', function () {
     $renderer = gfxRenderer(4, 4);
@@ -120,7 +120,7 @@ it('prefers a page-segment buffer for vertical-page mono specs', function () {
         page_axis: PageAxis::VERTICAL,
     );
 
-    $buffer = PhpdafruitGFX::preferredFramebuffer($spec, 128, 64);
+    $buffer = PhpdafruitGfx::preferredFramebuffer($spec, 128, 64);
 
     expect($buffer)->toBeInstanceOf(PageSegmentBuffer::class)
         ->and($buffer->viewportWidth())->toBe(128)
@@ -130,13 +130,13 @@ it('prefers a page-segment buffer for vertical-page mono specs', function () {
 it('prefers a dirty-regions buffer for row-major specs', function () {
     $spec = new FormatSpec(PixelFormat::ROW_MAJOR, BitDepth::B16);
 
-    expect(PhpdafruitGFX::preferredFramebuffer($spec, 160, 128))
+    expect(PhpdafruitGfx::preferredFramebuffer($spec, 160, 128))
         ->toBeInstanceOf(DirtyRegionsBuffer::class);
 });
 
 it('falls back to a full framebuffer for other specs', function () {
     $spec = new FormatSpec(PixelFormat::MONO_HORIZONTAL, BitDepth::B1, bit_order: BitOrder::MSB_FIRST);
 
-    expect(PhpdafruitGFX::preferredFramebuffer($spec, 8, 8))
+    expect(PhpdafruitGfx::preferredFramebuffer($spec, 8, 8))
         ->toBeInstanceOf(FullFramebuffer::class);
 });
