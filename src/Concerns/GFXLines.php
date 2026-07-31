@@ -197,6 +197,17 @@ trait GFXLines
             $w = $this->width() - $x;
         }
 
+        // The internal helpers write setSegment() straight to the buffer, so the
+        // active clip has to be applied here — in logical space, before the
+        // rotation switch below rewrites the coordinates.
+        $segment = $this->clipSegment($x, $y, $w, 1);
+
+        if (is_null($segment)) {
+            return $this;
+        }
+
+        [$x, $y, $w] = [$segment->x, $segment->y, $segment->width];
+
         switch ($this->getRotation()) {
             case 0:
                 $this->drawHorizontalLineInternal($x, $y, $w, $color);
@@ -256,6 +267,15 @@ trait GFXLines
         if (($y + $h) > $this->height()) {
             $h = $this->height() - $y;
         }
+
+        // Clipped in logical space for the same reason as drawHorizontalLine().
+        $segment = $this->clipSegment($x, $y, 1, $h);
+
+        if (is_null($segment)) {
+            return $this;
+        }
+
+        [$x, $y, $h] = [$segment->x, $segment->y, $segment->height];
 
         switch ($this->getRotation()) {
             case 0:

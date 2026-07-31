@@ -61,6 +61,10 @@ class PhpdafruitGfx extends Renderer2D
             return $this;
         }
 
+        if (! $this->clipAllows($x, $y)) {
+            return $this;
+        }
+
         [$x, $y] = $this->applyRotation($x, $y);
         $this->requireBuffer()->setPixel($x, $y, $color);
 
@@ -74,6 +78,16 @@ class PhpdafruitGfx extends Renderer2D
             ($width <= 0) || ($height <= 0)) {
             return $this;
         }
+
+        // Clip in logical space, before rotation, so a rejected fill never
+        // reaches the buffer and never marks a region dirty.
+        $segment = $this->clipSegment($x, $y, $width, $height);
+
+        if (is_null($segment)) {
+            return $this;
+        }
+
+        [$x, $y, $width, $height] = [$segment->x, $segment->y, $segment->width, $segment->height];
 
         $buffer = $this->requireBuffer();
 
