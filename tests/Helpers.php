@@ -1,20 +1,24 @@
 <?php
 
-use Fabricate\Framebuffers\FormatSpec;
-use Fabricate\Contracts\Framebuffers\Enums\BitDepth;
-use Fabricate\Contracts\Framebuffers\Enums\PixelFormat;
-use Fabricate\Framebuffers\Strategy\FullFramebuffer;
-use Microscrap\GFX\PhpdaFruit\PhpdafruitGfx;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\BitDepth;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\PixelFormat;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
+use ScrapyardIO\Tubes\Framebuffers\FullFramebuffer;
+use Microscrap\GFX\PhpdaFruit\PhpdafruitRenderer2D;
 
 /**
  * A renderer backed by a ROW_MAJOR / 8-bit canvas, so every pixel maps to one
  * byte in the dump and can be asserted directly.
  */
-function gfxRenderer(int $width, int $height): PhpdafruitGfx
+function gfxRenderer(int $width, int $height): PhpdafruitRenderer2D
 {
-    return new PhpdafruitGfx(
-        new FullFramebuffer($width, $height, new FormatSpec(PixelFormat::ROW_MAJOR, BitDepth::B8))
+    $buffer = FullFramebuffer::sized(
+        $width,
+        $height,
+        new FormatSpec(PixelFormat::ROW_MAJOR, BitDepth::B8),
     );
+
+    return new PhpdafruitRenderer2D($buffer);
 }
 
 /**
@@ -22,23 +26,37 @@ function gfxRenderer(int $width, int $height): PhpdafruitGfx
  *
  * @return array<int, int>
  */
-function gfxPixels(PhpdafruitGfx $renderer): array
+function gfxPixels(PhpdafruitRenderer2D $renderer): array
 {
-    return $renderer->buffer()->dump()[0]->raw_data;
+    $bytes = $renderer->framebuffer()->dump();
+
+    return array_values(unpack('C*', $bytes) ?: []);
 }
 
 /**
  * One pixel value, addressed in physical (buffer) coordinates.
  */
-function gfxPixel(PhpdafruitGfx $renderer, int $x, int $y): int
+function gfxPixel(PhpdafruitRenderer2D $renderer, int $x, int $y): int
 {
-    return gfxPixels($renderer)[($y * $renderer->buffer()->viewportWidth()) + $x];
+    return $renderer->framebuffer()->getPixel($x, $y);
 }
 
 /**
  * Count of non-zero (painted) pixels on the canvas.
  */
-function gfxPaintedCount(PhpdafruitGfx $renderer): int
+function gfxPaintedCount(PhpdafruitRenderer2D $renderer): int
 {
-    return count(array_filter(gfxPixels($renderer), fn (int $value) => $value !== 0));
+    $width = $renderer->framebuffer()->viewportWidth();
+    $height = $renderer->framebuffer()->viewportHeight();
+    $count = 0;
+
+    for ($y = 0; $y < $height; $y++) {
+        for ($x = 0; $x < $width; $x++) {
+            if ($renderer->framebuffer()->getPixel($x, $y) !== 0) {
+                $count++;
+            }
+        }
+    }
+
+    return $count;
 }

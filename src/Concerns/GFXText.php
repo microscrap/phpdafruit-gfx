@@ -2,10 +2,12 @@
 
 namespace Microscrap\GFX\PhpdaFruit\Concerns;
 
+use ScrapyardIO\Tubes\Rendering\Concerns\DrawsText;
+
 /**
- * @deprecated Use {@see \Fabricate\Rendering\Concerns\GFXText} directly.
+ * @deprecated Use {@see DrawsText} directly.
  */
 trait GFXText
 {
-    use \Fabricate\Rendering\Concerns\GFXText;
+    use DrawsText;
 }

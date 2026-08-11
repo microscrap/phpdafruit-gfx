@@ -1,15 +1,15 @@
 <?php
 
-use Fabricate\Framebuffers\FormatSpec;
-use Fabricate\Contracts\Framebuffers\Enums\BitDepth;
-use Fabricate\Contracts\Framebuffers\Enums\BitOrder;
-use Fabricate\Contracts\Framebuffers\Enums\PageAxis;
-use Fabricate\Contracts\Framebuffers\Enums\PixelFormat;
-use Fabricate\Contracts\Framebuffers\Enums\RenderType;
-use Fabricate\Framebuffers\Strategy\DirtyRegionsBuffer;
-use Fabricate\Framebuffers\Strategy\FullFramebuffer;
-use Fabricate\Framebuffers\Strategy\PageSegmentBuffer;
-use Microscrap\GFX\PhpdaFruit\PhpdafruitGfx;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\BitDepth;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\BitOrder;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\PageAxis;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\PixelFormat;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\RenderType;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
+use ScrapyardIO\Tubes\Framebuffers\DirtyRegionsBuffer;
+use ScrapyardIO\Tubes\Framebuffers\FullFramebuffer;
+use ScrapyardIO\Tubes\Framebuffers\PageSegmentBuffer;
+use Microscrap\GFX\PhpdaFruit\PhpdafruitRenderer2D;
 
 it('sets a single pixel', function () {
     $renderer = gfxRenderer(4, 4);
@@ -109,7 +109,7 @@ it('renders the framebuffer dump', function () {
 
     expect($frames)->toHaveCount(1)
         ->and($frames[0]->render_type)->toBe(RenderType::FULL)
-        ->and($frames[0]->raw_data)->toBe([3, 0, 0, 0]);
+        ->and(array_values(unpack('C*', $frames[0]->raw_data) ?: []))->toBe([3, 0, 0, 0]);
 });
 
 it('prefers a page-segment buffer for vertical-page mono specs', function () {
@@ -120,7 +120,7 @@ it('prefers a page-segment buffer for vertical-page mono specs', function () {
         page_axis: PageAxis::VERTICAL,
     );
 
-    $buffer = PhpdafruitGfx::preferredFramebuffer($spec, 128, 64);
+    $buffer = PhpdafruitRenderer2D::preferredFramebuffer($spec, 128, 64);
 
     expect($buffer)->toBeInstanceOf(PageSegmentBuffer::class)
         ->and($buffer->viewportWidth())->toBe(128)
@@ -130,13 +130,13 @@ it('prefers a page-segment buffer for vertical-page mono specs', function () {
 it('prefers a dirty-regions buffer for row-major specs', function () {
     $spec = new FormatSpec(PixelFormat::ROW_MAJOR, BitDepth::B16);
 
-    expect(PhpdafruitGfx::preferredFramebuffer($spec, 160, 128))
+    expect(PhpdafruitRenderer2D::preferredFramebuffer($spec, 160, 128))
         ->toBeInstanceOf(DirtyRegionsBuffer::class);
 });
 
 it('falls back to a full framebuffer for other specs', function () {
     $spec = new FormatSpec(PixelFormat::MONO_HORIZONTAL, BitDepth::B1, bit_order: BitOrder::MSB_FIRST);
 
-    expect(PhpdafruitGfx::preferredFramebuffer($spec, 8, 8))
+    expect(PhpdafruitRenderer2D::preferredFramebuffer($spec, 8, 8))
         ->toBeInstanceOf(FullFramebuffer::class);
 });

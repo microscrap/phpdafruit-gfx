@@ -4,17 +4,18 @@ namespace Microscrap\GFX\PhpdaFruit\Concerns;
 
 use InvalidArgumentException;
 use OutOfBoundsException;
-use Fabricate\Contracts\Framebuffers\Framebuffer;
+use ScrapyardIO\Tubes\Contracts\Framebuffers\Framebuffer;
+use ScrapyardIO\Tubes\Rendering\Concerns\DrawsText;
 
 /**
- * @property Framebuffer $buffer
- *
+ * @method Framebuffer framebuffer()
  * @method Framebuffer buffer()
  */
 trait GFXAPI
 {
     use GFXBitmaps, GFXDithering, GFXImages;
-    use \Fabricate\Rendering\Concerns\GFXText;
+    use DrawsText;
+    use ClipsDrawing;
     use GFXLines, GFXRects, GFXRounds, GFXTriangles;
 
     protected int $rotation = 0;
@@ -35,20 +36,22 @@ trait GFXAPI
 
     protected function applyRotation(int $x, int $y): array
     {
+        $buffer = $this->framebuffer();
+
         switch ($this->rotation) {
             case 1: // 90° rotation
                 $t = $x;
-                $x = $this->buffer->viewportWidth() - 1 - $y;
+                $x = $buffer->viewportWidth() - 1 - $y;
                 $y = $t;
                 break;
             case 2: // 180° rotation
-                $x = $this->buffer->viewportWidth() - 1 - $x;
-                $y = $this->buffer->viewportHeight() - 1 - $y;
+                $x = $buffer->viewportWidth() - 1 - $x;
+                $y = $buffer->viewportHeight() - 1 - $y;
                 break;
             case 3: // 270° rotation
                 $t = $x;
                 $x = $y;
-                $y = $this->buffer->viewportHeight() - 1 - $t;
+                $y = $buffer->viewportHeight() - 1 - $t;
                 break;
         }
 
@@ -57,16 +60,20 @@ trait GFXAPI
 
     public function width(): int
     {
+        $buffer = $this->framebuffer();
+
         return ($this->rotation & 1)
-            ? $this->buffer->viewportHeight()
-            : $this->buffer->viewportWidth();
+            ? $buffer->viewportHeight()
+            : $buffer->viewportWidth();
     }
 
     public function height(): int
     {
+        $buffer = $this->framebuffer();
+
         return ($this->rotation & 1)
-            ? $this->buffer->viewportWidth()
-            : $this->buffer->viewportHeight();
+            ? $buffer->viewportWidth()
+            : $buffer->viewportHeight();
     }
 
     /**
